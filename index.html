@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>عقار مصر</title>
+  <style>
+    body {
+      font-family: Arial;
+      margin: 0;
+      background: #f5f5f5;
+    }
+
+    header {
+      background: #1d4ed8;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .hero {
+      padding: 40px;
+      text-align: center;
+      background: white;
+    }
+
+    input, select {
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      background: #1d4ed8;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>عقار مصر</h1>
+  <p>منصة بيع وشراء العقارات</p>
+</header>
+
+<div class="hero">
+  <h2>ابحث عن عقارك الآن</h2>
+  <input type="text" placeholder="مدينة أو منطقة"/>
+  <select>
+    <option>نوع العقار</option>
+    <option>شقة</option>
+    <option>فيلا</option>
+    <option>محل</option>
+  </select>
+  <button class="btn">بحث</button>
+</div>
+
+<h2 style="text-align:center;">عقارات مميزة</h2>
+
+<div class="grid">
+  <div class="card">
+    <h3>شقة فاخرة</h3>
+    <p>أسوان الجديدة</p>
+    <p>1,250,000 جنيه</p>
+  </div>
+
+  <div class="card">
+    <h3>فيلا حديثة</h3>
+    <p>القاهرة الجديدة</p>
+    <p>5,900,000 جنيه</p>
+  </div>
+
+  <div class="card">
+    <h3>محل تجاري</h3>
+    <p>الحي الثالث</p>
+    <p>850,000 جنيه</p>
+  </div>
+</div>
+
+</body>
+</html>
