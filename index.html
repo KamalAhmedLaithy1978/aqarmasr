@@ -88,5 +88,38 @@
 
   </script>
 
-</body>
+<script>
+async function uploadImage(file) {
+  const formData = new FormData();
+
+  formData.append("file", file);
+  formData.append("upload_preset", "aqar_upload");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function handleSubmit() {
+  const file = document.getElementById("imageInput").files[0];
+
+  if (!file) {
+    alert("اختر صورة أولاً");
+    return;
+  }
+
+  const imageUrl = await uploadImage(file);
+
+  console.log("رابط الصورة:", imageUrl);
+
+  alert("تم رفع الصورة بنجاح");
+}
+</script></body>
 </html> 
