@@ -72,7 +72,19 @@
       document.getElementById("listings").innerHTML = html;
     }
 
-    loadListings();
+    document.getElementById("addBtn").onclick = async () => {
+
+  await addDoc(collection(db, "listings"), {
+    title: document.getElementById("title").value,
+    price: document.getElementById("price").value,
+    location: document.getElementById("location").value,
+    description: document.getElementById("description").value
+  });
+
+  alert("تم نشر الإعلان");
+
+  location.reload();
+};loadListings();
 
   </script>
 
