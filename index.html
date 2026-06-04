@@ -19,8 +19,7 @@
 
 <textarea id="description" placeholder="الوصف"></textarea><br><br>
 
-<button id="addBtn">نشر الإعلان</button>
-  
+<button onclick="handleSubmit()">نشر الإعلان</button>  
 <hr>
   
 <div id="listings"></div>
@@ -108,6 +107,8 @@ async function uploadImage(file) {
 }
 
 async function handleSubmit() {
+  console.log("BUTTON CLICKED"); // اختبار مهم
+
   const file = document.getElementById("imageInput").files[0];
 
   if (!file) {
@@ -117,9 +118,7 @@ async function handleSubmit() {
 
   const imageUrl = await uploadImage(file);
 
-  console.log("رابط الصورة:", imageUrl);
-
-  alert("تم رفع الصورة بنجاح");
+  console.log("Image URL:", imageUrl);
 }
 </script></body>
 </html> 
