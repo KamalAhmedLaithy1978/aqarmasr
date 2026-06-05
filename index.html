@@ -1,5 +1,4 @@
-<script>
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar">
 <head>
   <meta charset="UTF-8">
@@ -24,8 +23,7 @@
 <hr>
   
 <div id="listings"></div>
-const container = document.getElementById("listing");
-  <script type="module">
+<script type="module">
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
@@ -72,7 +70,7 @@ const container = document.getElementById("listing");
       document.getElementById("listings").innerHTML = html;
     }
 
-    document.getElementById("addBtn").onclick = async () => {
+    document.getElementById("handleSubmit").onclick = async () => {
 
   await addDoc(collection(db, "listings"), {
     title: document.getElementById("title").value,
@@ -121,6 +119,7 @@ async function handleSubmit() {
 
   console.log("Image URL:", imageUrl);
 }
+</script>
 </body> 
 </html> 
-<script/>
+
