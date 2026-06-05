@@ -40,6 +40,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// رفع الصورة (Cloudinary)
 async function uploadImage(file) {
   const formData = new FormData();
   formData.append("file", file);
@@ -57,6 +58,7 @@ async function uploadImage(file) {
   return data.secure_url;
 }
 
+// نشر الإعلان (مستقر حتى لو الصورة فشلت)
 window.handleSubmit = async () => {
 
   try {
@@ -69,7 +71,7 @@ window.handleSubmit = async () => {
       try {
         imageUrl = await uploadImage(file);
       } catch (e) {
-        console.log("Image error:", e);
+        console.log("Image upload failed:", e);
         imageUrl = "";
       }
     }
@@ -87,23 +89,11 @@ window.handleSubmit = async () => {
 
   } catch (err) {
     console.error(err);
-    alert("خطأ في النشر");
+    alert("حدث خطأ في النشر");
   }
 };
-  const imageUrl = await uploadImage(file);
 
-  await addDoc(collection(db, "listings"), {
-    title: document.getElementById("title").value,
-    price: document.getElementById("price").value,
-    location: document.getElementById("location").value,
-    description: document.getElementById("description").value,
-    image: imageUrl
-  });
-
-  alert("تم نشر الإعلان");
-  location.reload();
-};
-
+// عرض الإعلانات
 async function loadListings() {
   const querySnapshot = await getDocs(collection(db, "listings"));
 
@@ -115,7 +105,7 @@ async function loadListings() {
     html += `
       <div style="border:1px solid #ccc;padding:15px;margin:15px;border-radius:10px;">
         <h2>${data.title}</h2>
-        <img src="${data.image}" width="200">
+        ${data.image ? `<img src="${data.image}" width="200">` : ""}
         <p>💰 ${data.price}</p>
         <p>📍 ${data.location}</p>
         <p>${data.description || ""}</p>
