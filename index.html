@@ -7,23 +7,56 @@
 
 <body style="font-family: Arial; direction: rtl; padding:20px;">
 
-  <h1>🏠 عقار مصر</h1>
+<h1>🏠 عقار مصر</h1>
 
- <h2>إضافة إعلان جديد</h2>
+<h2>إضافة إعلان جديد</h2>
 
 <input id="title" placeholder="عنوان العقار"><br><br>
-
 <input id="price" placeholder="السعر"><br><br>
-<input type="file" id="imageInput" accept="image/*">
+<input type="file" id="imageInput"><br><br>
 <input id="location" placeholder="الموقع"><br><br>
-
 <textarea id="description" placeholder="الوصف"></textarea><br><br>
 
-<button onclick="handleSubmit()">نشر الإعلان</button>  
+<button onclick="handleSubmit()">نشر الإعلان</button>
+
 <hr>
-  
+
 <div id="listings"></div>
+
 <script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBbWyJgSN5j-34zICu1N1qT10WhnbMd0Y4",
+  authDomain: "aqarmasr-7abe0.firebaseapp.com",
+  projectId: "aqarmasr-7abe0",
+  storageBucket: "aqarmasr-7abe0.firebasestorage.app",
+  messagingSenderId: "892245289278",
+  appId: "1:892245289278:web:f50c5e68da5b04e4d6a46f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "aqar_upload");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
+    {
+      method: "POST",
+      body: formData
+    }
+  );
+
+  const data = await res.json();
+  return data.secure_url;
+}
+
 window.handleSubmit = async () => {
 
   const file = document.getElementById("imageInput").files[0];
@@ -46,77 +79,32 @@ window.handleSubmit = async () => {
   alert("تم نشر الإعلان");
   location.reload();
 };
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
-    import {
-      getFirestore,
-      collection,
-      getDocs,
-      addDoc
-    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+async function loadListings() {
+  const querySnapshot = await getDocs(collection(db, "listings"));
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBbWyJgSN5j-34zICu1N1qT10WhnbMd0Y4",
-      authDomain: "aqarmasr-7abe0.firebaseapp.com",
-      projectId: "aqarmasr-7abe0",
-      storageBucket: "aqarmasr-7abe0.firebasestorage.app",
-      messagingSenderId: "892245289278",
-      appId: "1:892245289278:web:f50c5e68da5b04e4d6a46f"
-    };
+  let html = "";
 
-    const app = initializeApp(firebaseConfig);
+  querySnapshot.forEach((doc) => {
+    const data = doc.data();
 
-    const db = getFirestore(app);
+    html += `
+      <div style="border:1px solid #ccc;padding:15px;margin:15px;border-radius:10px;">
+        <h2>${data.title}</h2>
+        <img src="${data.image}" width="200">
+        <p>💰 ${data.price}</p>
+        <p>📍 ${data.location}</p>
+        <p>${data.description || ""}</p>
+      </div>
+    `;
+  });
 
-    async function loadListings() {
-
-      const querySnapshot = await getDocs(collection(db, "listings"));
-
-      let html = "";
-
-      querySnapshot.forEach((doc) => {
-
-        const data = doc.data();
-
-        html += `
-          <div style="border:1px solid #ccc;padding:15px;margin:15px;border-radius:10px;">
-            <h2>${data.title}</h2>
-            <p>💰 السعر: ${data.price}</p>
-            <p>📍 الموقع: ${data.location}</p>
-            <p>${data.description || ""}</p>
-          </div>
-        `;
-      });
-document.getElementById("listings").innerHTML = html;
+  document.getElementById("listings").innerHTML = html;
 }
 
 loadListings();
 
-window.handleSubmit = async () => {
-
-  const file = document.getElementById("imageInput").files[0];
-
-  if (!file) {
-    alert("اختر صورة أولاً");
-    return;
-  }
-
-  const imageUrl = await uploadImage(file);
-
-  await addDoc(collection(db, "listings"), {
-    title: document.getElementById("title").value,
-    price: document.getElementById("price").value,
-    location: document.getElementById("location").value,
-    description: document.getElementById("description").value,
-    image: imageUrl
-  });
-
-  alert("تم نشر الإعلان");
-  location.reload();
-};
-  <img src="${data.image}" width="200">
 </script>
 
-</body> 
-</html> 
-
+</body>
+</html>
