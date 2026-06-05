@@ -87,11 +87,33 @@ window.handleSubmit = async () => {
           </div>
         `;
       });
-
-     document.getElementById("listings").innerHTML = html;
+document.getElementById("listings").innerHTML = html;
 }
 
 loadListings();
+
+window.handleSubmit = async () => {
+
+  const file = document.getElementById("imageInput").files[0];
+
+  if (!file) {
+    alert("اختر صورة أولاً");
+    return;
+  }
+
+  const imageUrl = await uploadImage(file);
+
+  await addDoc(collection(db, "listings"), {
+    title: document.getElementById("title").value,
+    price: document.getElementById("price").value,
+    location: document.getElementById("location").value,
+    description: document.getElementById("description").value,
+    image: imageUrl
+  });
+
+  alert("تم نشر الإعلان");
+  location.reload();
+};
   <img src="${data.image}" width="200">
 </script>
 
