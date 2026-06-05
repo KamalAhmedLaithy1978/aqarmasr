@@ -59,13 +59,37 @@ async function uploadImage(file) {
 
 window.handleSubmit = async () => {
 
-  const file = document.getElementById("imageInput").files[0];
+  try {
 
-  if (!file) {
-    alert("اختر صورة أولاً");
-    return;
+    const file = document.getElementById("imageInput").files[0];
+
+    let imageUrl = "";
+
+    if (file) {
+      try {
+        imageUrl = await uploadImage(file);
+      } catch (e) {
+        console.log("Image error:", e);
+        imageUrl = "";
+      }
+    }
+
+    await addDoc(collection(db, "listings"), {
+      title: document.getElementById("title").value,
+      price: document.getElementById("price").value,
+      location: document.getElementById("location").value,
+      description: document.getElementById("description").value,
+      image: imageUrl
+    });
+
+    alert("تم نشر الإعلان");
+    location.reload();
+
+  } catch (err) {
+    console.error(err);
+    alert("خطأ في النشر");
   }
-
+};
   const imageUrl = await uploadImage(file);
 
   await addDoc(collection(db, "listings"), {
