@@ -24,7 +24,28 @@
   
 <div id="listings"></div>
 <script type="module">
+window.handleSubmit = async () => {
 
+  const file = document.getElementById("imageInput").files[0];
+
+  if (!file) {
+    alert("اختر صورة أولاً");
+    return;
+  }
+
+  const imageUrl = await uploadImage(file);
+
+  await addDoc(collection(db, "listings"), {
+    title: document.getElementById("title").value,
+    price: document.getElementById("price").value,
+    location: document.getElementById("location").value,
+    description: document.getElementById("description").value,
+    image: imageUrl
+  });
+
+  alert("تم نشر الإعلان");
+  location.reload();
+};
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 
     import {
@@ -71,41 +92,9 @@
 }
 
 loadListings();
+  <img src="${data.image}" width="200">
 </script>
-<script>
-async function uploadImage(file) {
-  const formData = new FormData();
 
-  formData.append("file", file);
-  formData.append("upload_preset", "aqar_upload");
-
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/YOUR_CLOUD_NAME/image/upload",
-    {
-      method: "POST",
-      body: formData
-    }
-  );
-
-  const data = await res.json();
-  return data.secure_url;
-}
-
-async function handleSubmit() {
-  console.log("BUTTON CLICKED"); // اختبار مهم
-
-  const file = document.getElementById("imageInput").files[0];
-
-  if (!file) {
-    alert("اختر صورة أولاً");
-    return;
-  }
-
-  const imageUrl = await uploadImage(file);
-
-  console.log("Image URL:", imageUrl);
-}
-</script>
 </body> 
 </html> 
 
