@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>عقار مصر AQARMASR</title>
+<title>عقار مصر</title>
 
 <style>
 body{
@@ -13,16 +13,39 @@ background:#0b1220;
 color:white;
 }
 
-header{
-background:#0f172a;
-padding:15px;
-text-align:center;
-font-weight:bold;
+/* تقسيم الصفحة */
+.wrapper{
+display:flex;
+height:100vh;
 }
 
-.container{max-width:1100px;margin:auto;padding:15px;}
+/* اليمين = الإعلانات */
+.right{
+flex:2;
+padding:15px;
+overflow:auto;
+}
 
-input,select,textarea{
+/* اليسار = تسجيل + بحث */
+.left{
+flex:1;
+background:#0f172a;
+padding:15px;
+overflow:auto;
+border-left:2px solid #1f2937;
+}
+
+.card{
+background:#111827;
+border-radius:12px;
+padding:10px;
+margin-bottom:10px;
+}
+
+.price{color:#22c55e;font-weight:bold}
+
+/* inputs */
+input,select{
 width:100%;
 padding:10px;
 margin:5px 0;
@@ -35,49 +58,40 @@ width:100%;
 padding:10px;
 border:none;
 border-radius:8px;
-cursor:pointer;
 margin-top:5px;
+cursor:pointer;
 }
 
 .green{background:#22c55e}
-.red{background:#ef4444}
 .blue{background:#3b82f6}
+.red{background:#ef4444}
 
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
-gap:15px;
-margin-top:15px;
+gap:10px;
 }
-
-.card{
-background:#111827;
-border-radius:12px;
-overflow:hidden;
-}
-
-.card img{
-width:100%;
-height:160px;
-object-fit:cover;
-}
-
-.card-body{padding:10px}
-
-.price{color:#22c55e;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header>🏢 عقار مصر AQARMASR</header>
+<div class="wrapper">
 
-<div class="container">
+<!-- يمين: الإعلانات -->
+<div class="right">
+<h2>🏠 الإعلانات</h2>
+<div id="list" class="grid"></div>
+</div>
 
-<h3>تسجيل الدخول</h3>
+<!-- يسار: تسجيل + بحث -->
+<div class="left">
+
+<h3>👤 تسجيل الدخول</h3>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
-<button class="green" onclick="signup()">تسجيل</button>
+
+<button class="green" onclick="signup()">تسجيل جديد</button>
 <button class="green" onclick="login()">دخول</button>
 <button class="red" onclick="logout()">خروج</button>
 
@@ -85,18 +99,22 @@ object-fit:cover;
 
 <hr>
 
-<h3>إضافة إعلان</h3>
+<h3>➕ إضافة إعلان</h3>
 
 <input id="title" placeholder="العنوان">
 <input id="price" placeholder="السعر">
 
 <!-- المحافظات -->
-<select id="gov" onchange="updateCities()">
+<select id="gov" onchange="loadCities()">
 <option>اختر المحافظة</option>
 <option>القاهرة</option>
 <option>الجيزة</option>
 <option>الإسكندرية</option>
 <option>الدقهلية</option>
+<option>الشرقية</option>
+<option>الغربية</option>
+<option>المنيا</option>
+<option>أسيوط</option>
 </select>
 
 <!-- المراكز -->
@@ -104,27 +122,27 @@ object-fit:cover;
 <option>اختر المركز</option>
 </select>
 
-<textarea id="desc" placeholder="الوصف"></textarea>
-
 <button class="blue" onclick="createAd()">نشر إعلان</button>
 
 <hr>
 
-<h3>🔎 البحث</h3>
+<h3>🔎 بحث</h3>
 
-<select id="filterGov">
+<select id="fGov">
 <option value="">كل المحافظات</option>
 <option>القاهرة</option>
 <option>الجيزة</option>
 <option>الإسكندرية</option>
+<option>الدقهلية</option>
+<option>الشرقية</option>
+<option>الغربية</option>
+<option>المنيا</option>
+<option>أسيوط</option>
 </select>
-
-<input id="minPrice" placeholder="أقل سعر">
-<input id="maxPrice" placeholder="أعلى سعر">
 
 <button class="blue" onclick="filter()">بحث</button>
 
-<div class="grid" id="list"></div>
+</div>
 
 </div>
 
@@ -156,7 +174,7 @@ const auth = getAuth(app);
 let user=null;
 let all=[];
 
-/* auth */
+/* تسجيل */
 window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value);
 window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
 window.logout=()=>signOut(auth);
@@ -167,36 +185,41 @@ userBox.innerText=u?u.email:"زائر";
 load();
 });
 
-/* المحافظات → مراكز */
-window.updateCities=()=>{
-const gov=gov.value;
-const city=document.getElementById("city");
+/* المحافظات → مراكز مصر */
+window.loadCities=()=>{
+let g=gov.value;
+let c=document.getElementById("city");
 
-let options=[];
-
-if(gov==="القاهرة") options=["مدينة نصر","المعادي","مصر الجديدة"];
-if(gov==="الجيزة") options=["الدقي","6 أكتوبر","الهرم"];
-if(gov==="الإسكندرية") options=["سيدي جابر","العجمي"];
-if(gov==="الدقهلية") options=["المنصورة","طلخا"];
-
-city.innerHTML="<option>اختر المركز</option>";
-
-options.forEach(c=>{
-city.innerHTML+=`<option>${c}</option>`;
-});
+let map={
+"القاهرة":["مدينة نصر","المعادي","مصر الجديدة","حلوان"],
+"الجيزة":["الدقي","الهرم","6 أكتوبر","فيصل"],
+"الإسكندرية":["سيدي جابر","العجمي","محرم بك"],
+"الدقهلية":["المنصورة","طلخا","ميت غمر"],
+"الشرقية":["الزقازيق","بلبيس","أبو حماد"],
+"الغربية":["طنطا","المحلة","زفتى"],
+"المنيا":["المنيا","مغاغة","ملوي"],
+"أسيوط":["أسيوط","ديروط","صدفا"]
 };
 
-/* إنشاء إعلان */
+c.innerHTML="<option>اختر المركز</option>";
+
+if(map[g]){
+map[g].forEach(x=>{
+c.innerHTML+=`<option>${x}</option>`;
+});
+}
+};
+
+/* إضافة إعلان */
 window.createAd=async()=>{
 
-if(!user){alert("سجل دخول");return;}
+if(!user){alert("سجل دخول أولاً");return;}
 
 await addDoc(collection(db,"listings"),{
 title:title.value,
 price:Number(price.value),
 gov:gov.value,
 city:city.value,
-desc:desc.value,
 uid:user.uid,
 time:Date.now()
 });
@@ -206,7 +229,7 @@ load();
 
 /* تحميل */
 async function load(){
-const snap=await getDocs(collection(db,"listings"));
+let snap=await getDocs(collection(db,"listings"));
 all=[];
 snap.forEach(d=>all.push(d.data()));
 render(all);
@@ -218,35 +241,22 @@ function render(list){
 let html="";
 
 list.forEach(d=>{
-
 html+=`
 <div class="card">
-<div class="card-body">
-
 <h3>${d.title}</h3>
 <div class="price">${d.price} جنيه</div>
 <p>${d.gov} - ${d.city}</p>
-<p>${d.desc||""}</p>
-
-</div>
 </div>
 `;
 });
 
-document.getElementById("list").innerHTML=html;
+list.innerHTML=html;
 }
 
-/* بحث */
+/* فلترة */
 window.filter=()=>{
-
-let g=document.getElementById("filterGov").value;
-let min=Number(minPrice.value||0);
-let max=Number(maxPrice.value||999999999);
-
-render(all.filter(d=>
-(!g || d.gov===g) &&
-(d.price>=min && d.price<=max)
-));
+let g=fGov.value;
+render(all.filter(d=>!g || d.gov===g));
 };
 
 load();
