@@ -2,7 +2,7 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>عقار مصر | AQARMASR</title>
+<title>عقار مصر AQARMASR</title>
 
 <style>
 body{
@@ -17,61 +17,37 @@ header{
 background:#0f172a;
 padding:15px;
 text-align:center;
-font-size:20px;
 font-weight:bold;
 }
 
 .container{max-width:1100px;margin:auto;padding:15px;}
 
-.hero{
-height:220px;
-background:url("https://images.unsplash.com/photo-1507089947368-19c1da9775ae") center/cover;
-display:flex;
-align-items:center;
-justify-content:center;
-border-radius:12px;
-margin:10px 0;
-}
-
-.hero h1{
-background:rgba(0,0,0,0.6);
-padding:10px;
-border-radius:10px;
-}
-
-input,textarea{
+input,select,textarea{
 width:100%;
 padding:10px;
 margin:5px 0;
-border:none;
 border-radius:8px;
+border:none;
 }
 
 button{
+width:100%;
 padding:10px;
 border:none;
 border-radius:8px;
 cursor:pointer;
-margin:3px 0;
-width:100%;
+margin-top:5px;
 }
 
-.green{background:#22c55e;color:black}
-.red{background:#ef4444;color:white}
-.blue{background:#3b82f6;color:white}
-
-.search{
-width:100%;
-padding:10px;
-border-radius:8px;
-border:none;
-margin:10px 0;
-}
+.green{background:#22c55e}
+.red{background:#ef4444}
+.blue{background:#3b82f6}
 
 .grid{
 display:grid;
 grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
 gap:15px;
+margin-top:15px;
 }
 
 .card{
@@ -82,54 +58,71 @@ overflow:hidden;
 
 .card img{
 width:100%;
-height:170px;
+height:160px;
 object-fit:cover;
 }
 
 .card-body{padding:10px}
 
 .price{color:#22c55e;font-weight:bold}
-
-.badge{
-background:#f59e0b;
-color:black;
-padding:3px 7px;
-border-radius:6px;
-font-size:12px;
-}
 </style>
 </head>
 
 <body>
 
-<header>🏢 عقار مصر | AQARMASR</header>
+<header>🏢 عقار مصر AQARMASR</header>
 
 <div class="container">
 
-<div class="hero">
-<h1>🏠 ابحث عن عقارك بسهولة</h1>
-</div>
-
-<h3>👤 الحساب</h3>
-<input id="email" placeholder="البريد">
-<input id="password" type="password" placeholder="كلمة المرور">
-
+<h3>تسجيل الدخول</h3>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
 <button class="green" onclick="signup()">تسجيل</button>
 <button class="green" onclick="login()">دخول</button>
 <button class="red" onclick="logout()">خروج</button>
 
 <p id="userBox"></p>
 
-<h3>➕ إضافة إعلان (بعد الدفع لاحقًا)</h3>
+<hr>
+
+<h3>إضافة إعلان</h3>
+
 <input id="title" placeholder="العنوان">
 <input id="price" placeholder="السعر">
-<input id="location" placeholder="الموقع">
+
+<!-- المحافظات -->
+<select id="gov" onchange="updateCities()">
+<option>اختر المحافظة</option>
+<option>القاهرة</option>
+<option>الجيزة</option>
+<option>الإسكندرية</option>
+<option>الدقهلية</option>
+</select>
+
+<!-- المراكز -->
+<select id="city">
+<option>اختر المركز</option>
+</select>
+
 <textarea id="desc" placeholder="الوصف"></textarea>
-<input type="file" id="img">
 
-<button class="green" onclick="createAd()">إنشاء طلب إعلان</button>
+<button class="blue" onclick="createAd()">نشر إعلان</button>
 
-<input class="search" id="search" placeholder="بحث..." oninput="filter()">
+<hr>
+
+<h3>🔎 البحث</h3>
+
+<select id="filterGov">
+<option value="">كل المحافظات</option>
+<option>القاهرة</option>
+<option>الجيزة</option>
+<option>الإسكندرية</option>
+</select>
+
+<input id="minPrice" placeholder="أقل سعر">
+<input id="maxPrice" placeholder="أعلى سعر">
+
+<button class="blue" onclick="filter()">بحث</button>
 
 <div class="grid" id="list"></div>
 
@@ -139,7 +132,7 @@ font-size:12px;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-getFirestore, collection, addDoc, getDocs, updateDoc, doc
+getFirestore, collection, addDoc, getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
@@ -163,55 +156,51 @@ const auth = getAuth(app);
 let user=null;
 let all=[];
 
-/* رفع صورة */
-async function upload(file){
-const f=new FormData();
-f.append("file",file);
-f.append("upload_preset","aqar_upload");
-
-const r=await fetch("https://api.cloudinary.com/v1_1/duchftqn1/image/upload",{method:"POST",body:f});
-const d=await r.json();
-return d.secure_url;
-}
-
-/* تسجيل */
+/* auth */
 window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value);
 window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
 window.logout=()=>signOut(auth);
 
-/* حالة المستخدم */
 onAuthStateChanged(auth,(u)=>{
 user=u;
 userBox.innerText=u?u.email:"زائر";
 load();
 });
 
-/* إنشاء إعلان (Pending) */
-window.createAd = async () => {
+/* المحافظات → مراكز */
+window.updateCities=()=>{
+const gov=gov.value;
+const city=document.getElementById("city");
 
-if(!user){
-alert("يجب تسجيل الدخول");
-return;
-}
+let options=[];
 
-let image = "";
-if(img.files && img.files[0]){
-image = await upload(img.files[0]);
-}
+if(gov==="القاهرة") options=["مدينة نصر","المعادي","مصر الجديدة"];
+if(gov==="الجيزة") options=["الدقي","6 أكتوبر","الهرم"];
+if(gov==="الإسكندرية") options=["سيدي جابر","العجمي"];
+if(gov==="الدقهلية") options=["المنصورة","طلخا"];
+
+city.innerHTML="<option>اختر المركز</option>";
+
+options.forEach(c=>{
+city.innerHTML+=`<option>${c}</option>`;
+});
+};
+
+/* إنشاء إعلان */
+window.createAd=async()=>{
+
+if(!user){alert("سجل دخول");return;}
 
 await addDoc(collection(db,"listings"),{
 title:title.value,
-price:price.value,
-location:location.value,
+price:Number(price.value),
+gov:gov.value,
+city:city.value,
 desc:desc.value,
-image,
 uid:user.uid,
-status:"pending",
-paid:false,
 time:Date.now()
 });
 
-alert("تم إنشاء الطلب، سيتم تفعيله بعد الدفع");
 load();
 };
 
@@ -219,54 +208,44 @@ load();
 async function load(){
 const snap=await getDocs(collection(db,"listings"));
 all=[];
-snap.forEach(d=>all.push({id:d.id,...d.data()}));
+snap.forEach(d=>all.push(d.data()));
 render(all);
 }
 
-/* عرض فقط النشط */
+/* عرض */
 function render(list){
 
 let html="";
 
 list.forEach(d=>{
 
-if(d.status !== "active") return;
-
 html+=`
 <div class="card">
-${d.image?`<img src="${d.image}">`:``}
 <div class="card-body">
 
 <h3>${d.title}</h3>
-<div class="price">${d.price}</div>
-<p>📍 ${d.location}</p>
+<div class="price">${d.price} جنيه</div>
+<p>${d.gov} - ${d.city}</p>
 <p>${d.desc||""}</p>
-
-${d.featured?`<div class="badge">⭐ مميز</div>`:""}
 
 </div>
 </div>
 `;
 });
 
-list.innerHTML=html;
+document.getElementById("list").innerHTML=html;
 }
-
-/* تفعيل إعلان (محاكاة دفع) */
-window.activate = async (id) => {
-await updateDoc(doc(db,"listings",id),{
-status:"active",
-paid:true
-});
-load();
-};
 
 /* بحث */
 window.filter=()=>{
-let v=search.value.toLowerCase();
+
+let g=document.getElementById("filterGov").value;
+let min=Number(minPrice.value||0);
+let max=Number(maxPrice.value||999999999);
+
 render(all.filter(d=>
-(d.title||"").toLowerCase().includes(v) ||
-(d.location||"").toLowerCase().includes(v)
+(!g || d.gov===g) &&
+(d.price>=min && d.price<=max)
 ));
 };
 
