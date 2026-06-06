@@ -154,29 +154,34 @@ let ads = [];
 
 /* AUTH */
 window.signup = async () => {
-try {
-const email = email.value;
-const password = password.value;
+  try {
+    const emailVal = document.getElementById("email").value;
+    const passwordVal = document.getElementById("password").value;
 
-await createUserWithEmailAndPassword(auth, email, password);
-alert("تم التسجيل");
-} catch(e){
-alert(e.code + " : " + e.message);
-}
+    await createUserWithEmailAndPassword(auth, emailVal, passwordVal);
+
+    alert("تم التسجيل بنجاح");
+  } catch (e) {
+    alert(e.code + " : " + e.message);
+  }
 };
 
 window.login = async () => {
-try {
-await signInWithEmailAndPassword(auth, email.value, password.value);
-alert("تم تسجيل الدخول");
-} catch(e){
-alert(e.code + " : " + e.message);
-}
+  try {
+    const emailVal = document.getElementById("email").value;
+    const passwordVal = document.getElementById("password").value;
+
+    await signInWithEmailAndPassword(auth, emailVal, passwordVal);
+
+    alert("تم تسجيل الدخول");
+  } catch (e) {
+    alert(e.code + " : " + e.message);
+  }
 };
 
 window.logout = async () => {
-await signOut(auth);
-alert("تم الخروج");
+  await signOut(auth);
+  alert("تم تسجيل الخروج");
 };
 
 /* USER */
