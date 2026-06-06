@@ -74,7 +74,6 @@ margin-bottom:10px;
 
 <div class="wrapper">
 
-<!-- LEFT -->
 <div class="left">
 
 <h3>👤 الحساب</h3>
@@ -89,7 +88,7 @@ margin-bottom:10px;
 
 <hr>
 
-<h3>➕ إضافة إعلان</h3>
+<h3>➕ إضافة إعلان (Firestore)</h3>
 
 <input id="title" placeholder="العنوان">
 <input id="price" placeholder="السعر">
@@ -102,17 +101,16 @@ margin-bottom:10px;
 
 <textarea id="desc" placeholder="الوصف"></textarea>
 
-<button class="blue" onclick="addAd()">نشر الإعلان</button>
+<button class="blue" onclick="addAd()">نشر إعلان</button>
 
 <hr>
 
 <h3>🔎 بحث</h3>
-<input id="search" placeholder="بحث بالاسم">
+<input id="search" placeholder="بحث">
 <button class="blue" onclick="filter()">بحث</button>
 
 </div>
 
-<!-- RIGHT -->
 <div class="right">
 <h2>🏠 الإعلانات</h2>
 <div id="list"></div>
@@ -122,9 +120,8 @@ margin-bottom:10px;
 
 <script type="module">
 
-/* FIREBASE IMPORTS (FIXED) */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
+import {
 getAuth,
 createUserWithEmailAndPassword,
 signInWithEmailAndPassword,
@@ -139,7 +136,7 @@ addDoc,
 getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* FIREBASE CONFIG (FIXED) */
+/* CONFIG */
 const firebaseConfig = {
 apiKey: "AIzaSyBbWyJgSN5j-34zICu1N1qT10WhnbMd0Y4",
 authDomain: "aqarmasr-7abe0.firebaseapp.com",
@@ -155,89 +152,85 @@ const db = getFirestore(app);
 
 let ads = [];
 
-/* AUTH FIXED */
+/* AUTH */
 window.signup = async () => {
 try {
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+const email = email.value;
+const password = password.value;
 
-const res = await createUserWithEmailAndPassword(auth, email, password);
-alert("تم التسجيل: " + res.user.email);
-} catch (e) {
+await createUserWithEmailAndPassword(auth, email, password);
+alert("تم التسجيل");
+} catch(e){
 alert(e.code + " : " + e.message);
 }
 };
 
 window.login = async () => {
 try {
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
-
-await signInWithEmailAndPassword(auth, email, password);
+await signInWithEmailAndPassword(auth, email.value, password.value);
 alert("تم تسجيل الدخول");
-} catch (e) {
+} catch(e){
 alert(e.code + " : " + e.message);
 }
 };
 
 window.logout = async () => {
 await signOut(auth);
-alert("تم تسجيل الخروج");
+alert("تم الخروج");
 };
 
-/* LOAD USER */
+/* USER */
 onAuthStateChanged(auth,(user)=>{
-document.getElementById("userBox").innerText = user ? user.email : "زائر";
+userBox.innerText = user ? user.email : "زائر";
+loadAds();
 });
 
-/* ADD AD (LOCAL TEMP FOR NOW) */
-window.addAd = () => {
-
-let ad = {
-title: document.getElementById("title").value,
-price: document.getElementById("price").value,
-gov: document.getElementById("gov").value,
-desc: document.getElementById("desc").value
+/* ADD TO FIRESTORE */
+window.addAd = async () => {
+try{
+await addDoc(collection(db,"ads"),{
+title:title.value,
+price:price.value,
+gov:gov.value,
+desc:desc.value,
+time:Date.now()
+});
+alert("تم نشر الإعلان");
+loadAds();
+}catch(e){
+alert(e.message);
+}
 };
 
-ads.push(ad);
+/* LOAD ADS */
+async function loadAds(){
+let snap = await getDocs(collection(db,"ads"));
+ads = [];
+snap.forEach(d=>ads.push(d.data()));
 render(ads);
-
-};
+}
 
 /* SEARCH */
 window.filter = () => {
-let s = document.getElementById("search").value.toLowerCase();
-
-if(!s){
-render(ads);
-return;
-}
-
-render(ads.filter(a =>
-a.title.toLowerCase().includes(s)
-));
+let s = search.value.toLowerCase();
+render(ads.filter(a=>a.title.toLowerCase().includes(s)));
 };
 
 /* RENDER */
 function render(list){
-let html = "";
-
+let html="";
 list.forEach(a=>{
-html += `
+html+=`
 <div class="card">
 <h3>${a.title}</h3>
 <p class="price">${a.price}</p>
-<p>${a.gov}</p>
-<p>${a.desc}</p>
+<p>${a.gov || ""}</p>
+<p>${a.desc || ""}</p>
 </div>
 `;
 });
-
-document.getElementById("list").innerHTML = html;
+list.innerHTML = html;
 }
-
-render(ads);
 
 </script>
 
