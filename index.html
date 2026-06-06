@@ -2,115 +2,61 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>عقار مصر - احترافي</title>
+<title>عقار مصر - منصة شركات</title>
 
 <style>
-body{
-font-family:Arial;
-direction:rtl;
-margin:0;
-background:#f4f6f8;
-}
-
-header{
-background:#1f2a38;
-color:white;
-padding:15px;
-text-align:center;
-}
-
-.container{
-width:90%;
-max-width:900px;
-margin:auto;
-margin-top:20px;
-}
-
-.card{
-background:white;
-padding:15px;
-border-radius:10px;
-margin-bottom:15px;
-box-shadow:0 2px 6px rgba(0,0,0,0.1);
-}
-
-input,textarea{
-width:100%;
-padding:10px;
-margin:5px 0;
-border:1px solid #ddd;
-border-radius:6px;
-}
-
-button{
-padding:10px;
-border:none;
-border-radius:6px;
-cursor:pointer;
-}
-
-.green{background:#27ae60;color:white;width:100%}
-.red{background:#e74c3c;color:white;width:100%}
-
-.property{
-background:white;
-padding:10px;
-margin:10px 0;
-border-radius:10px;
-}
-
-.property img{
-width:100%;
-border-radius:10px;
-}
-
-.topbar{
-display:flex;
-justify-content:space-between;
-align-items:center;
-}
+body{font-family:Arial;direction:rtl;margin:0;background:#f5f6fa}
+header{background:#0f172a;color:white;padding:15px;text-align:center}
+.container{max-width:1000px;margin:auto;padding:15px}
+.card{background:white;padding:15px;margin:10px 0;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
+input,textarea{width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:8px}
+button{padding:10px;border:none;border-radius:8px;cursor:pointer}
+.green{background:#16a34a;color:white;width:100%}
+.red{background:#dc2626;color:white;width:100%}
+.property{background:white;padding:10px;margin:10px 0;border-radius:10px}
+.property img{width:100%;border-radius:10px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.small{font-size:12px;color:gray}
 </style>
 
 </head>
 
 <body>
 
-<header>
-<h2>🏠 عقار مصر - النسخة الاحترافية</h2>
-</header>
+<header>🏢 عقار مصر - منصة شركات عقارية</header>
 
 <div class="container">
 
-<!-- تسجيل -->
+<!-- AUTH -->
 <div class="card">
 <h3>تسجيل / دخول</h3>
 
 <input id="email" placeholder="الإيميل">
-<input id="password" placeholder="كلمة المرور" type="password">
+<input id="password" type="password" placeholder="كلمة المرور">
 
-<button class="green" onclick="register()">تسجيل</button>
+<button class="green" onclick="signup()">تسجيل</button>
 <button class="green" onclick="login()">دخول</button>
 <button class="red" onclick="logout()">خروج</button>
 
-<p id="userInfo"></p>
+<p id="user"></p>
 </div>
 
-<!-- إضافة إعلان -->
+<!-- ADD -->
 <div class="card">
 <h3>إضافة إعلان</h3>
 
 <input id="title" placeholder="العنوان">
 <input id="price" placeholder="السعر">
 <input id="location" placeholder="الموقع">
-<textarea id="description" placeholder="الوصف"></textarea>
-<input type="file" id="imageInput">
+<textarea id="desc" placeholder="الوصف"></textarea>
+<input type="file" id="img">
 
-<button class="green" onclick="handleSubmit()">نشر</button>
+<button class="green" onclick="add()">نشر إعلان</button>
 </div>
 
 <input id="search" placeholder="بحث..." oninput="filter()">
 
-<div id="listings"></div>
+<div id="list"></div>
 
 </div>
 
@@ -123,11 +69,9 @@ getDocs, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
-getAuth,
-createUserWithEmailAndPassword,
+getAuth, createUserWithEmailAndPassword,
 signInWithEmailAndPassword,
-signOut,
-onAuthStateChanged
+signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -143,89 +87,76 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let currentUser = null;
-let allData = [];
+let user = null;
+let data = [];
 
-/* ===== رفع صورة ===== */
-async function uploadImage(file){
-const form = new FormData();
-form.append("file",file);
-form.append("upload_preset","aqar_upload");
+/* CLOUDINARY */
+async function upload(file){
+const f=new FormData();
+f.append("file",file);
+f.append("upload_preset","aqar_upload");
 
-const res = await fetch(
+const r=await fetch(
 "https://api.cloudinary.com/v1_1/duchftqn1/image/upload",
-{method:"POST",body:form}
+{method:"POST",body:f}
 );
 
-const data = await res.json();
-return data.secure_url;
+const d=await r.json();
+return d.secure_url;
 }
 
-/* ===== تسجيل ===== */
-window.register = async () => {
-await createUserWithEmailAndPassword(auth,email.value,password.value);
-};
+/* AUTH */
+window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value);
+window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
+window.logout=()=>signOut(auth);
 
-window.login = async () => {
-await signInWithEmailAndPassword(auth,email.value,password.value);
-};
-
-window.logout = async () => {
-await signOut(auth);
-};
-
-/* ===== مراقبة المستخدم ===== */
-onAuthStateChanged(auth,(user)=>{
-currentUser = user;
-userInfo.innerText = user ? "مرحبًا " + user.email : "غير مسجل";
+/* USER STATE */
+onAuthStateChanged(auth,(u)=>{
+user=u;
+document.getElementById("user").innerText=u?u.email:"غير مسجل";
 load();
 });
 
-/* ===== نشر إعلان ===== */
-window.handleSubmit = async () => {
+/* ADD */
+window.add=async()=>{
 
-if(!currentUser){
-alert("سجل دخول أولاً");
-return;
-}
+if(!user){alert("سجل دخول");return;}
 
-let img = "";
-const file = imageInput.files[0];
-if(file) img = await uploadImage(file);
+let img="";
+if(img.files) img=await upload(img.files[0]);
 
 await addDoc(collection(db,"listings"),{
 title:title.value,
 price:price.value,
 location:location.value,
-description:description.value,
+desc:desc.value,
 image:img,
-uid:currentUser.uid
+uid:user.uid,
+time:Date.now()
 });
 
-alert("تم النشر");
 load();
 };
 
-/* ===== تحميل ===== */
+/* LOAD */
 async function load(){
 
-const snap = await getDocs(collection(db,"listings"));
+const snap=await getDocs(collection(db,"listings"));
+data=[];
 
-allData = [];
+snap.forEach(d=>data.push({id:d.id,...d.data()}));
 
-snap.forEach(d=>{
-allData.push({id:d.id,...d.data()});
-});
+data.sort((a,b)=>b.time-a.time);
 
-render(allData);
+render(data);
 }
 
-/* ===== عرض ===== */
-function render(data){
+/* RENDER */
+function render(list){
 
 let html="";
 
-data.forEach(d=>{
+list.forEach(d=>{
 
 html+=`
 <div class="property">
@@ -233,32 +164,34 @@ html+=`
 ${d.image?`<img src="${d.image}">`:``}
 <p>${d.price}</p>
 <p>${d.location}</p>
-<p>${d.description||""}</p>
+<p class="small">${d.desc||""}</p>
 
-${currentUser && currentUser.uid===d.uid ?
-`<button class="red" onclick="del('${d.id}')">حذف</button>` : ""}
+${user && user.uid===d.uid?`
+<button class="red" onclick="del('${d.id}')">حذف</button>
+`:``}
 </div>
 `;
 });
 
-listings.innerHTML=html;
+document.getElementById("list").innerHTML=html;
 }
 
-/* ===== حذف ===== */
-window.del = async (id)=>{
+/* DELETE */
+window.del=async(id)=>{
 await deleteDoc(doc(db,"listings",id));
 load();
 };
 
-/* ===== بحث ===== */
-window.filter = ()=>{
-let v = search.value.toLowerCase();
-
-render(allData.filter(d=>
-(d.title||"").toLowerCase().includes(v) ||
+/* FILTER */
+window.filter=()=>{
+let v=search.value.toLowerCase();
+render(data.filter(d=>
+(d.title||"").toLowerCase().includes(v)||
 (d.location||"").toLowerCase().includes(v)
 ));
 };
+
+load();
 
 </script>
 
