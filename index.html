@@ -177,9 +177,36 @@ let user=null;
 let all=[];
 
 /* AUTH */
-window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value);
-window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
-window.logout=()=>signOut(auth);
+window.signup = async () => {
+  try {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    await createUserWithEmailAndPassword(auth, email, password);
+
+    alert("تم إنشاء الحساب بنجاح");
+  } catch (e) {
+    alert("خطأ: " + e.message);
+  }
+};
+
+window.login = async () => {
+  try {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    await signInWithEmailAndPassword(auth, email, password);
+
+    alert("تم تسجيل الدخول");
+  } catch (e) {
+    alert("خطأ: " + e.message);
+  }
+};
+
+window.logout = async () => {
+  await signOut(auth);
+  alert("تم تسجيل الخروج");
+};
 
 onAuthStateChanged(auth,(u)=>{
 user=u;
