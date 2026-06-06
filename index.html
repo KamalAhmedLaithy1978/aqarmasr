@@ -13,89 +13,38 @@ background:#0b1220;
 color:white;
 }
 
-/* HEADER */
 header{
 background:#0f172a;
 padding:15px;
 text-align:center;
-font-size:22px;
+font-size:20px;
 font-weight:bold;
 }
 
-/* HERO */
+.container{max-width:1100px;margin:auto;padding:15px;}
+
 .hero{
-height:240px;
+height:220px;
 background:url("https://images.unsplash.com/photo-1507089947368-19c1da9775ae") center/cover;
 display:flex;
 align-items:center;
 justify-content:center;
-margin-bottom:15px;
+border-radius:12px;
+margin:10px 0;
 }
 
 .hero h1{
 background:rgba(0,0,0,0.6);
-padding:12px;
+padding:10px;
 border-radius:10px;
 }
 
-/* CONTAINER */
-.container{
-max-width:1200px;
-margin:auto;
-padding:15px;
-}
-
-/* GRID */
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-gap:15px;
-}
-
-/* CARD */
-.card{
-background:#111827;
-border-radius:15px;
-overflow:hidden;
-transition:0.3s;
-}
-
-.card:hover{
-transform:scale(1.03);
-}
-
-.card img{
-width:100%;
-height:180px;
-object-fit:cover;
-}
-
-.card-body{
-padding:10px;
-}
-
-.price{
-color:#22c55e;
-font-weight:bold;
-}
-
-.badge{
-background:#f59e0b;
-color:black;
-padding:4px 8px;
-border-radius:6px;
-font-size:12px;
-display:inline-block;
-margin-top:5px;
-}
-
-/* INPUTS */
 input,textarea{
 width:100%;
 padding:10px;
 margin:5px 0;
-border-radius:8px;
 border:none;
+border-radius:8px;
 }
 
 button{
@@ -104,11 +53,12 @@ border:none;
 border-radius:8px;
 cursor:pointer;
 margin:3px 0;
+width:100%;
 }
 
-.green{background:#22c55e;color:black;width:100%}
-.red{background:#ef4444;color:white;width:100%}
-.blue{background:#3b82f6;color:white;width:100%}
+.green{background:#22c55e;color:black}
+.red{background:#ef4444;color:white}
+.blue{background:#3b82f6;color:white}
 
 .search{
 width:100%;
@@ -117,50 +67,70 @@ border-radius:8px;
 border:none;
 margin:10px 0;
 }
-</style>
 
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(250px,1fr));
+gap:15px;
+}
+
+.card{
+background:#111827;
+border-radius:12px;
+overflow:hidden;
+}
+
+.card img{
+width:100%;
+height:170px;
+object-fit:cover;
+}
+
+.card-body{padding:10px}
+
+.price{color:#22c55e;font-weight:bold}
+
+.badge{
+background:#f59e0b;
+color:black;
+padding:3px 7px;
+border-radius:6px;
+font-size:12px;
+}
+</style>
 </head>
 
 <body>
 
 <header>🏢 عقار مصر | AQARMASR</header>
 
-<div class="hero">
-<h1>🏠 ابحث عن عقارك في مصر بسهولة</h1>
-</div>
-
 <div class="container">
 
-<!-- تسجيل -->
-<div>
-<h3>👤 الحساب</h3>
+<div class="hero">
+<h1>🏠 ابحث عن عقارك بسهولة</h1>
+</div>
 
-<input id="email" placeholder="البريد الإلكتروني">
+<h3>👤 الحساب</h3>
+<input id="email" placeholder="البريد">
 <input id="password" type="password" placeholder="كلمة المرور">
 
-<button class="green" onclick="signup()">تسجيل جديد</button>
-<button class="green" onclick="login()">تسجيل دخول</button>
+<button class="green" onclick="signup()">تسجيل</button>
+<button class="green" onclick="login()">دخول</button>
 <button class="red" onclick="logout()">خروج</button>
 
 <p id="userBox"></p>
-</div>
 
-<!-- إضافة إعلان -->
-<div>
-<h3>➕ إضافة إعلان</h3>
-
-<input id="title" placeholder="عنوان العقار">
+<h3>➕ إضافة إعلان (بعد الدفع لاحقًا)</h3>
+<input id="title" placeholder="العنوان">
 <input id="price" placeholder="السعر">
 <input id="location" placeholder="الموقع">
 <textarea id="desc" placeholder="الوصف"></textarea>
 <input type="file" id="img">
 
-<button class="green" onclick="add()">نشر الإعلان</button>
-</div>
+<button class="green" onclick="createAd()">إنشاء طلب إعلان</button>
 
-<input id="search" class="search" placeholder="🔍 بحث عن عقار..." oninput="filter()">
+<input class="search" id="search" placeholder="بحث..." oninput="filter()">
 
-<!-- الإعلانات -->
 <div class="grid" id="list"></div>
 
 </div>
@@ -169,8 +139,7 @@ margin:10px 0;
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-getFirestore, collection, addDoc,
-getDocs, deleteDoc, doc
+getFirestore, collection, addDoc, getDocs, updateDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
@@ -182,9 +151,9 @@ onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-apiKey: "YOUR_KEY",
-authDomain: "YOUR_DOMAIN",
-projectId: "YOUR_PROJECT"
+apiKey:"YOUR_KEY",
+authDomain:"YOUR_DOMAIN",
+projectId:"YOUR_PROJECT"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -194,7 +163,7 @@ const auth = getAuth(app);
 let user=null;
 let all=[];
 
-/* رفع الصور */
+/* رفع صورة */
 async function upload(file){
 const f=new FormData();
 f.append("file",file);
@@ -210,18 +179,24 @@ window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value
 window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
 window.logout=()=>signOut(auth);
 
+/* حالة المستخدم */
 onAuthStateChanged(auth,(u)=>{
 user=u;
-userBox.innerText=u?`مرحباً ${u.email}`:"تصفح كزائر";
+userBox.innerText=u?u.email:"زائر";
 load();
 });
 
-/* إضافة إعلان */
-window.add=async()=>{
+/* إنشاء إعلان (Pending) */
+window.createAd = async () => {
 
-let img="";
-if(img.files && img.files.length>0){
-img=await upload(img.files[0]);
+if(!user){
+alert("يجب تسجيل الدخول");
+return;
+}
+
+let image = "";
+if(img.files && img.files[0]){
+image = await upload(img.files[0]);
 }
 
 await addDoc(collection(db,"listings"),{
@@ -229,12 +204,14 @@ title:title.value,
 price:price.value,
 location:location.value,
 desc:desc.value,
-image:img,
-uid:user?user.uid:null,
-featured:false,
+image,
+uid:user.uid,
+status:"pending",
+paid:false,
 time:Date.now()
 });
 
+alert("تم إنشاء الطلب، سيتم تفعيله بعد الدفع");
 load();
 };
 
@@ -243,34 +220,31 @@ async function load(){
 const snap=await getDocs(collection(db,"listings"));
 all=[];
 snap.forEach(d=>all.push({id:d.id,...d.data()}));
-all.sort((a,b)=>b.time-a.time);
 render(all);
 }
 
-/* عرض */
+/* عرض فقط النشط */
 function render(list){
 
 let html="";
 
 list.forEach(d=>{
 
+if(d.status !== "active") return;
+
 html+=`
 <div class="card">
-
 ${d.image?`<img src="${d.image}">`:``}
-
 <div class="card-body">
 
 <h3>${d.title}</h3>
-
 <div class="price">${d.price}</div>
 <p>📍 ${d.location}</p>
 <p>${d.desc||""}</p>
 
-${d.featured?`<div class="badge">⭐ إعلان مميز</div>`:""}
+${d.featured?`<div class="badge">⭐ مميز</div>`:""}
 
 </div>
-
 </div>
 `;
 });
@@ -278,11 +252,20 @@ ${d.featured?`<div class="badge">⭐ إعلان مميز</div>`:""}
 list.innerHTML=html;
 }
 
+/* تفعيل إعلان (محاكاة دفع) */
+window.activate = async (id) => {
+await updateDoc(doc(db,"listings",id),{
+status:"active",
+paid:true
+});
+load();
+};
+
 /* بحث */
 window.filter=()=>{
 let v=search.value.toLowerCase();
 render(all.filter(d=>
-(d.title||"").toLowerCase().includes(v)||
+(d.title||"").toLowerCase().includes(v) ||
 (d.location||"").toLowerCase().includes(v)
 ));
 };
