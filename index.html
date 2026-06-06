@@ -1,122 +1,264 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-  <meta charset="UTF-8">
-  <title>عقار مصر</title>
+<meta charset="UTF-8">
+<title>عقار مصر - احترافي</title>
+
+<style>
+body{
+font-family:Arial;
+direction:rtl;
+margin:0;
+background:#f4f6f8;
+}
+
+header{
+background:#1f2a38;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.container{
+width:90%;
+max-width:900px;
+margin:auto;
+margin-top:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+border-radius:10px;
+margin-bottom:15px;
+box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:1px solid #ddd;
+border-radius:6px;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+.green{background:#27ae60;color:white;width:100%}
+.red{background:#e74c3c;color:white;width:100%}
+
+.property{
+background:white;
+padding:10px;
+margin:10px 0;
+border-radius:10px;
+}
+
+.property img{
+width:100%;
+border-radius:10px;
+}
+
+.topbar{
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+</style>
+
 </head>
 
-<body style="font-family: Arial; direction: rtl; padding:20px;">
+<body>
 
-<h1>🏠 عقار مصر</h1>
+<header>
+<h2>🏠 عقار مصر - النسخة الاحترافية</h2>
+</header>
 
-<h2>إضافة إعلان جديد</h2>
+<div class="container">
 
-<input id="title" placeholder="عنوان العقار"><br><br>
-<input id="price" placeholder="السعر"><br><br>
-<input type="file" id="imageInput"><br><br>
-<input id="location" placeholder="الموقع"><br><br>
-<textarea id="description" placeholder="الوصف"></textarea><br><br>
+<!-- تسجيل -->
+<div class="card">
+<h3>تسجيل / دخول</h3>
 
-<button onclick="handleSubmit()">نشر الإعلان</button>
+<input id="email" placeholder="الإيميل">
+<input id="password" placeholder="كلمة المرور" type="password">
 
-<hr>
+<button class="green" onclick="register()">تسجيل</button>
+<button class="green" onclick="login()">دخول</button>
+<button class="red" onclick="logout()">خروج</button>
+
+<p id="userInfo"></p>
+</div>
+
+<!-- إضافة إعلان -->
+<div class="card">
+<h3>إضافة إعلان</h3>
+
+<input id="title" placeholder="العنوان">
+<input id="price" placeholder="السعر">
+<input id="location" placeholder="الموقع">
+<textarea id="description" placeholder="الوصف"></textarea>
+<input type="file" id="imageInput">
+
+<button class="green" onclick="handleSubmit()">نشر</button>
+</div>
+
+<input id="search" placeholder="بحث..." oninput="filter()">
 
 <div id="listings"></div>
+
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+getFirestore, collection, addDoc,
+getDocs, deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+import {
+getAuth,
+createUserWithEmailAndPassword,
+signInWithEmailAndPassword,
+signOut,
+onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBbWyJgSN5j-34zICu1N1qT10WhnbMd0Y4",
-  authDomain: "aqarmasr-7abe0.firebaseapp.com",
-  projectId: "aqarmasr-7abe0",
-  storageBucket: "aqarmasr-7abe0.firebasestorage.app",
-  messagingSenderId: "892245289278",
-  appId: "1:892245289278:web:f50c5e68da5b04e4d6a46f"
+apiKey: "AIzaSyBbWyJgSN5j-34zICu1N1qT10WhnbMd0Y4",
+authDomain: "aqarmasr-7abe0.firebaseapp.com",
+projectId: "aqarmasr-7abe0",
+storageBucket: "aqarmasr-7abe0.firebasestorage.app",
+messagingSenderId: "892245289278",
+appId: "1:892245289278:web:f50c5e68da5b04e4d6a46f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
-// رفع الصورة (Cloudinary)
-async function uploadImage(file) {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "aqar_upload");
+let currentUser = null;
+let allData = [];
 
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/duchftqn1/image/upload",
-    {
-      method: "POST",
-      body: formData
-    }
-  );
+/* ===== رفع صورة ===== */
+async function uploadImage(file){
+const form = new FormData();
+form.append("file",file);
+form.append("upload_preset","aqar_upload");
 
-  const data = await res.json();
-  return data.secure_url;
+const res = await fetch(
+"https://api.cloudinary.com/v1_1/duchftqn1/image/upload",
+{method:"POST",body:form}
+);
+
+const data = await res.json();
+return data.secure_url;
 }
 
-// نشر الإعلان (مستقر حتى لو الصورة فشلت)
-window.handleSubmit = async () => {
-
-  try {
-
-    const file = document.getElementById("imageInput").files[0];
-
-    let imageUrl = "";
-
-    if (file) {
-      try {
-        imageUrl = await uploadImage(file);
-      } catch (e) {
-        console.log("Image upload failed:", e);
-        imageUrl = "";
-      }
-    }
-
-    await addDoc(collection(db, "listings"), {
-      title: document.getElementById("title").value,
-      price: document.getElementById("price").value,
-      location: document.getElementById("location").value,
-      description: document.getElementById("description").value,
-      image: imageUrl
-    });
-
-    alert("تم نشر الإعلان");
-    location.reload();
-
-  } catch (err) {
-    console.error(err);
-    alert("حدث خطأ في النشر");
-  }
+/* ===== تسجيل ===== */
+window.register = async () => {
+await createUserWithEmailAndPassword(auth,email.value,password.value);
 };
 
-// عرض الإعلانات
-async function loadListings() {
-  const querySnapshot = await getDocs(collection(db, "listings"));
+window.login = async () => {
+await signInWithEmailAndPassword(auth,email.value,password.value);
+};
 
-  let html = "";
+window.logout = async () => {
+await signOut(auth);
+};
 
-  querySnapshot.forEach((doc) => {
-    const data = doc.data();
+/* ===== مراقبة المستخدم ===== */
+onAuthStateChanged(auth,(user)=>{
+currentUser = user;
+userInfo.innerText = user ? "مرحبًا " + user.email : "غير مسجل";
+load();
+});
 
-    html += `
-      <div style="border:1px solid #ccc;padding:15px;margin:15px;border-radius:10px;">
-        <h2>${data.title}</h2>
-        ${data.image ? `<img src="${data.image}" width="200">` : ""}
-        <p>💰 ${data.price}</p>
-        <p>📍 ${data.location}</p>
-        <p>${data.description || ""}</p>
-      </div>
-    `;
-  });
+/* ===== نشر إعلان ===== */
+window.handleSubmit = async () => {
 
-  document.getElementById("listings").innerHTML = html;
+if(!currentUser){
+alert("سجل دخول أولاً");
+return;
 }
 
-loadListings();
+let img = "";
+const file = imageInput.files[0];
+if(file) img = await uploadImage(file);
+
+await addDoc(collection(db,"listings"),{
+title:title.value,
+price:price.value,
+location:location.value,
+description:description.value,
+image:img,
+uid:currentUser.uid
+});
+
+alert("تم النشر");
+load();
+};
+
+/* ===== تحميل ===== */
+async function load(){
+
+const snap = await getDocs(collection(db,"listings"));
+
+allData = [];
+
+snap.forEach(d=>{
+allData.push({id:d.id,...d.data()});
+});
+
+render(allData);
+}
+
+/* ===== عرض ===== */
+function render(data){
+
+let html="";
+
+data.forEach(d=>{
+
+html+=`
+<div class="property">
+<h3>${d.title}</h3>
+${d.image?`<img src="${d.image}">`:``}
+<p>${d.price}</p>
+<p>${d.location}</p>
+<p>${d.description||""}</p>
+
+${currentUser && currentUser.uid===d.uid ?
+`<button class="red" onclick="del('${d.id}')">حذف</button>` : ""}
+</div>
+`;
+});
+
+listings.innerHTML=html;
+}
+
+/* ===== حذف ===== */
+window.del = async (id)=>{
+await deleteDoc(doc(db,"listings",id));
+load();
+};
+
+/* ===== بحث ===== */
+window.filter = ()=>{
+let v = search.value.toLowerCase();
+
+render(allData.filter(d=>
+(d.title||"").toLowerCase().includes(v) ||
+(d.location||"").toLowerCase().includes(v)
+));
+};
 
 </script>
 
