@@ -5,30 +5,95 @@
 <title>عقار مصر - منصة شركات</title>
 
 <style>
-body{font-family:Arial;direction:rtl;margin:0;background:#f5f6fa}
-header{background:#0f172a;color:white;padding:15px;text-align:center}
-.container{max-width:1000px;margin:auto;padding:15px}
-.card{background:white;padding:15px;margin:10px 0;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
-input,textarea{width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:8px}
-button{padding:10px;border:none;border-radius:8px;cursor:pointer}
+body{margin:0;font-family:Arial;direction:rtl;background:#f4f6fb}
+header{background:#0f172a;color:#fff;padding:15px;text-align:center}
+
+.container{max-width:1100px;margin:auto;padding:15px}
+
+/* AUTH */
+.auth{
+background:white;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+box-shadow:0 2px 10px rgba(0,0,0,0.08);
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+margin:5px 0;
+border:1px solid #ddd;
+border-radius:8px;
+}
+
+button{
+padding:10px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+
 .green{background:#16a34a;color:white;width:100%}
 .red{background:#dc2626;color:white;width:100%}
-.property{background:white;padding:10px;margin:10px 0;border-radius:10px}
-.property img{width:100%;border-radius:10px}
-.row{display:flex;justify-content:space-between;align-items:center}
-.small{font-size:12px;color:gray}
-</style>
+.blue{background:#2563eb;color:white;width:100%}
 
+/* GRID */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+gap:15px;
+}
+
+/* CARD */
+.card{
+background:white;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 4px 12px rgba(0,0,0,0.08);
+transition:0.2s;
+}
+
+.card:hover{transform:scale(1.02)}
+
+.card img{
+width:100%;
+height:180px;
+object-fit:cover;
+}
+
+.card-body{padding:10px}
+
+.price{color:#16a34a;font-weight:bold}
+
+.badge{
+background:#f59e0b;
+color:white;
+padding:3px 8px;
+border-radius:6px;
+font-size:12px;
+}
+
+.small{font-size:12px;color:gray}
+
+.search{
+width:100%;
+padding:10px;
+border-radius:8px;
+border:1px solid #ddd;
+margin-bottom:10px;
+}
+</style>
 </head>
 
 <body>
 
-<header>🏢 عقار مصر - منصة شركات عقارية</header>
+<header>🏢 عقار مصر - منصة احترافية</header>
 
 <div class="container">
 
 <!-- AUTH -->
-<div class="card">
+<div class="auth">
 <h3>تسجيل / دخول</h3>
 
 <input id="email" placeholder="الإيميل">
@@ -38,11 +103,11 @@ button{padding:10px;border:none;border-radius:8px;cursor:pointer}
 <button class="green" onclick="login()">دخول</button>
 <button class="red" onclick="logout()">خروج</button>
 
-<p id="user"></p>
+<p id="userBox"></p>
 </div>
 
 <!-- ADD -->
-<div class="card">
+<div class="auth">
 <h3>إضافة إعلان</h3>
 
 <input id="title" placeholder="العنوان">
@@ -51,12 +116,13 @@ button{padding:10px;border:none;border-radius:8px;cursor:pointer}
 <textarea id="desc" placeholder="الوصف"></textarea>
 <input type="file" id="img">
 
-<button class="green" onclick="add()">نشر إعلان</button>
+<button class="green" onclick="add()">نشر الإعلان</button>
 </div>
 
-<input id="search" placeholder="بحث..." oninput="filter()">
+<input id="search" class="search" placeholder="بحث..." oninput="filter()">
 
-<div id="list"></div>
+<!-- LISTINGS -->
+<div class="grid" id="list"></div>
 
 </div>
 
@@ -69,9 +135,11 @@ getDocs, deleteDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
-getAuth, createUserWithEmailAndPassword,
+getAuth,
+createUserWithEmailAndPassword,
 signInWithEmailAndPassword,
-signOut, onAuthStateChanged
+signOut,
+onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -87,8 +155,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-let user = null;
-let data = [];
+let user=null;
+let all=[];
 
 /* CLOUDINARY */
 async function upload(file){
@@ -110,20 +178,24 @@ window.signup=()=>createUserWithEmailAndPassword(auth,email.value,password.value
 window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
 window.logout=()=>signOut(auth);
 
-/* USER STATE */
 onAuthStateChanged(auth,(u)=>{
 user=u;
-document.getElementById("user").innerText=u?u.email:"غير مسجل";
+userBox.innerText=u?u.email:"تصفح كزائر";
 load();
 });
 
-/* ADD */
+/* ADD LISTING */
 window.add=async()=>{
 
-if(!user){alert("سجل دخول");return;}
+if(!user){
+alert("سجل دخول أولاً");
+return;
+}
 
 let img="";
-if(img.files) img=await upload(img.files[0]);
+if(img.files.length>0){
+img=await upload(img.files[0]);
+}
 
 await addDoc(collection(db,"listings"),{
 title:title.value,
@@ -132,6 +204,7 @@ location:location.value,
 desc:desc.value,
 image:img,
 uid:user.uid,
+featured:false,
 time:Date.now()
 });
 
@@ -142,13 +215,16 @@ load();
 async function load(){
 
 const snap=await getDocs(collection(db,"listings"));
-data=[];
 
-snap.forEach(d=>data.push({id:d.id,...d.data()}));
+all=[];
 
-data.sort((a,b)=>b.time-a.time);
+snap.forEach(d=>{
+all.push({id:d.id,...d.data()});
+});
 
-render(data);
+all.sort((a,b)=>b.time-a.time);
+
+render(all);
 }
 
 /* RENDER */
@@ -159,21 +235,32 @@ let html="";
 list.forEach(d=>{
 
 html+=`
-<div class="property">
-<h3>${d.title}</h3>
+<div class="card">
+
+${d.featured?`<div class="badge">⭐ مميز</div>`:""}
+
 ${d.image?`<img src="${d.image}">`:``}
-<p>${d.price}</p>
+
+<div class="card-body">
+
+<h3>${d.title}</h3>
+
+<p class="price">${d.price}</p>
 <p>${d.location}</p>
 <p class="small">${d.desc||""}</p>
 
 ${user && user.uid===d.uid?`
 <button class="red" onclick="del('${d.id}')">حذف</button>
+<button class="blue" onclick="makeFeatured('${d.id}')">⭐ تمييز (مدفوع)</button>
 `:``}
+
+</div>
+
 </div>
 `;
 });
 
-document.getElementById("list").innerHTML=html;
+list.innerHTML=html;
 }
 
 /* DELETE */
@@ -182,10 +269,27 @@ await deleteDoc(doc(db,"listings",id));
 load();
 };
 
-/* FILTER */
+/* FEATURED (نظام مدفوع تجريبي) */
+window.makeFeatured=async(id)=>{
+
+alert("تم تمييز الإعلان (نظام تجريبي)");
+
+await addDoc(collection(db,"listings"),{
+...all.find(x=>x.id===id),
+featured:true,
+time:Date.now()
+});
+
+await deleteDoc(doc(db,"listings",id));
+
+load();
+};
+
+/* SEARCH */
 window.filter=()=>{
 let v=search.value.toLowerCase();
-render(data.filter(d=>
+
+render(all.filter(d=>
 (d.title||"").toLowerCase().includes(v)||
 (d.location||"").toLowerCase().includes(v)
 ));
